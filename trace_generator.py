@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 import torch
 
 class Trace:
+
     def __init__(self, number_of_boundaries: int = 1, trace_len : int = 128, impulse: impulse.Impulse = None) -> None:
         self.number_of_boundaries = number_of_boundaries
         self.shape = (trace_len,)
@@ -52,18 +53,71 @@ class Trace:
         plt.show()
     
     def add_damping(self, type: str='linear'):
+        """
+        Apply damping to the trace array.
+        Parameters:
+            type (str, optional): The type of damping to apply. Defaults to 'linear'.
+        Returns:
+            None
+        """
         if type == 'linear':
             self.trace *= np.linspace(1,0.1, self.shape[0])
+
+    def add_noise(self, sigma: float = 0.1):
+        """
+        Add noise to the trace array.
+        Parameters:
+            sigma (float): The standard deviation of the noise distribution. Defaults to 0.1.
+        Returns:
+            None
+        """
+        self.trace += np.random.normal(0, sigma, self.shape)
+    
+    def from_numpy_to_tensor(self):
+        self.trace = torch.from_numpy(self.trace)
+
+    def save_trace_to_tensor(self, path: str = '',normalize: bool = True):
+        """
+        Save the trace array to a torch tensor.
+        Parameters:
+            path (str, optional): The path to save the tensor to. Defaults to ''.
+        Returns:
+            None
+        """
+        if path == '':
+            raise Exception('Path not set')
+        if normalize:
+            self.normalize_trace()
+        torch.save(torch.from_numpy(self.trace), path)
+    
+    def save_impulse_to_tensor(self, path: str = '',normalize: bool = True):
+        """
+        Save the impulse array to a torch tensor.
+        Parameters:
+            path (str, optional): The path to save the tensor to. Defaults to ''.
+        Returns:
+            None
+        """
+        if path == '':
+            raise Exception('Path not set')
+
+        self.from_numpy_to_tensor()
+        torch.save(torch.from_numpy(self.impulse.form), path)
+    
+    def normalize_trace(self):
+        self.trace = (self.trace - np.min(self.trace)) / (np.max(self.trace) - np.min(self.trace))
     
 
     
 if __name__ == "__main__":
-    impulse_test = impulse.Impulse(len=20, dt=20/np.pi/2).get_unnamed_form()
+    impulse_test = impulse.Impulse(len=40, dt=40/np.pi/2).get_unnamed_form()
+    impulse_test.normalize_impulse()
     trace = Trace(number_of_boundaries=100,impulse=impulse_test, trace_len=1024)
     trace.make_reflection_trace()
     # trace.plot_reflection_trace() 
     trace.convolve_with_impulse()
     trace.add_damping()
+    trace.add_noise()
     trace.plot_trace()       
 
 

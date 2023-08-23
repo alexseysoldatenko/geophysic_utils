@@ -31,6 +31,9 @@ class Impulse:
     def load_from_txt(self, path):
         self.form = np.loadtxt(path)
         return self
+    
+    def normalize_impulse(self):
+        self.form = ((self.form - np.min(self.form)) / (np.max(self.form) - np.min(self.form)) - 0.5) * 2
 
     def plot_form(self):
         if not hasattr(self, 'form'):
