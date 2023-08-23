@@ -3,11 +3,10 @@ import torch
 import matplotlib.pyplot as plt
 
 class Impulse:
-    def __init__(self, len: int = 100,  dt: int = 1,start_phase: bool = False) -> None:
+    def __init__(self, len: int = 100,  dt: int = 1) -> None:
         self.len = len
         self.dt = dt
         self.freq = 1 / self.dt
-        self.start_phase = start_phase
 
     def to_tensor(self, path=''):
         if not hasattr(self, 'form'):
@@ -17,9 +16,18 @@ class Impulse:
         torch.save(form_tensor, path)
         
     def get_sin_form(self):
-        self.form = np.sin(np.arange(self.len) * self.freq + np.pi*int(self.start_phase))
+        self.form = np.sin(np.arange(self.len) * self.freq)
         return self
     
+
+    def get_unnamed_form(self):
+        range_vals = np.arange(-self.len // 2, self.len // 2)
+        frequency = self.freq
+        denominator = range_vals + 1e-10
+        numerator = np.sin(range_vals * frequency) * np.cos(2*range_vals * frequency)
+        self.form = numerator / denominator
+        return self
+
     def load_from_txt(self, path):
         self.form = np.loadtxt(path)
         return self
@@ -31,11 +39,13 @@ class Impulse:
         plt.plot(self.form)
         plt.show()
 
-def generate_impulse(impulse_type: str, length: int = 100, dt: int = 1, plot: bool = False,start_phase: bool = False) -> Impulse:
-    impulse = Impulse(length, dt,start_phase=start_phase)
+def generate_impulse(impulse_type: str, length: int = 100, dt: int = 1, plot: bool = False) -> Impulse:
+    impulse = Impulse(length, dt)
     
     if impulse_type == 'sin':
         impulse = impulse.get_sin_form()
+    elif impulse_type == 'sinc':
+        impulse = impulse.get_unnamed_form()
     
     if plot:
         impulse.plot_form()
